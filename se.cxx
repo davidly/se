@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "djlres.hxx"
+#include "djl_wait.hxx"
 
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "user32.lib")
@@ -14,8 +15,6 @@
 
 #define REGISTRY_APP_NAME L"SOFTWARE\\davidlyseconds"
 #define REGISTRY_WINDOW_POSITION L"WindowPosition"
-
-#define TIMER_ID 1
 
 LRESULT CALLBACK WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 
@@ -69,8 +68,10 @@ static void HSVToRGB( int h, int s, int v, int &r, int &g, int &b )
     }
 } //HSVToRGB
 
-void CALLBACK SecTimerProc( HWND hwnd, UINT ui, UINT_PTR uiptr, DWORD dw )
+void CALLBACK TimerApcRoutine( LPVOID arg, DWORD low, DWORD high )
 {
+    HWND hwnd = (HWND) arg;
+
     SYSTEMTIME lt;
     GetLocalTime( &lt );
 
@@ -79,7 +80,7 @@ void CALLBACK SecTimerProc( HWND hwnd, UINT ui, UINT_PTR uiptr, DWORD dw )
         g_lt = lt;
         InvalidateRect( hwnd, NULL, TRUE );
     }
-} //SecTimerProc
+} //TimerApcRoutine
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow )
 {
@@ -131,16 +132,34 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdSho
 
     ShowWindow( hwnd, nCmdShow );
 
-    SetTimer( hwnd, TIMER_ID, 200, SecTimerProc );
+    CWaitPrecise wait;
+    bool ok = wait.SetTimer( TimerApcRoutine, (LPVOID) hwnd, 20 );
+    if ( !ok )
+        return 0;
 
     SetProcessWorkingSetSize( GetCurrentProcess(), ~0, ~0 );
 
-    MSG msg = { };
-    while ( GetMessage( &msg, NULL, 0, 0 ) )
+    MSG msg = {0};
+    bool done = false;
+
+    do
     {
-        TranslateMessage( &msg );
-        DispatchMessage( &msg );
-    }
+        DWORD dw = MsgWaitForMultipleObjectsEx( 0, 0, INFINITE, QS_ALLINPUT, MWMO_ALERTABLE | MWMO_INPUTAVAILABLE );
+        if ( WAIT_FAILED == dw )
+            break;
+
+        while ( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) )
+        {
+            TranslateMessage( &msg );
+            DispatchMessage( &msg );
+
+            if ( WM_QUIT == msg.message )
+            {
+                done = true;
+                break;
+            }
+        }
+    } while( !done );
 
     DeleteObject( g_fontText );
 
@@ -217,8 +236,6 @@ LRESULT CALLBACK WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam 
 
         case WM_DESTROY:
         {
-            KillTimer( hwnd, TIMER_ID );
-
             RECT rectPos;
             GetWindowRect( hwnd, &rectPos );
 
