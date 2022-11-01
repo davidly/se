@@ -84,7 +84,10 @@ void CALLBACK TimerApcRoutine( LPVOID arg, DWORD low, DWORD high )
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow )
 {
-    SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+    typedef BOOL ( WINAPI *LPFN_SPDAC )( DPI_AWARENESS_CONTEXT );
+    LPFN_SPDAC spdac = (LPFN_SPDAC) GetProcAddress( GetModuleHandleA( "user32" ), "SetProcessDpiAwarenessContext" );
+    if ( spdac )
+        spdac( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
 
     GetLocalTime( &g_lt );
 
