@@ -133,7 +133,9 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdSho
     if ( NULL == hwnd )
         return 0;
 
-    ShowWindow( hwnd, nCmdShow );
+    // show the window, but don't steal the focus, since nobody wants to type in this app
+
+    ShowWindow( hwnd, /*nCmdShow |*/ SW_SHOWNOACTIVATE );
 
     CWaitPrecise wait;
     bool ok = wait.SetTimer( TimerApcRoutine, (LPVOID) hwnd, 20 );
