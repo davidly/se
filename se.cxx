@@ -70,6 +70,8 @@ static void HSVToRGB( int h, int s, int v, int &r, int &g, int &b )
 
 void CALLBACK TimerApcRoutine( LPVOID arg, DWORD low, DWORD high )
 {
+    UNREFERENCED_PARAMETER( low );
+    UNREFERENCED_PARAMETER( high );
     HWND hwnd = (HWND) arg;
 
     SYSTEMTIME lt;
@@ -84,6 +86,7 @@ void CALLBACK TimerApcRoutine( LPVOID arg, DWORD low, DWORD high )
 
 int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow )
 {
+    UNREFERENCED_PARAMETER( nCmdShow );
     typedef BOOL ( WINAPI *LPFN_SPDAC )( DPI_AWARENESS_CONTEXT );
     LPFN_SPDAC spdac = (LPFN_SPDAC) GetProcAddress( GetModuleHandleA( "user32" ), "SetProcessDpiAwarenessContext" );
     if ( spdac )
@@ -117,7 +120,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdSho
         WCHAR awcPos[ 100 ];
         BOOL fFound = CDJLRegistry::readStringFromRegistry( HKEY_CURRENT_USER, REGISTRY_APP_NAME, REGISTRY_WINDOW_POSITION, awcPos, sizeof( awcPos ) );
         if ( fFound )
-            swscanf( awcPos, L"%d %d", &posLeft, &posTop );
+            swscanf_s( awcPos, L"%d %d", &posLeft, &posTop );
     }
 
     const WCHAR CLASS_NAME[] = L"Seconds-davidly-Class";
@@ -142,7 +145,7 @@ int WINAPI wWinMain( HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdSho
     if ( !ok )
         return 0;
 
-    SetProcessWorkingSetSize( GetCurrentProcess(), ~0, ~0 );
+    SetProcessWorkingSetSize( GetCurrentProcess(), ~ (size_t) 0, ~ (size_t) 0 );
 
     MSG msg = {0};
     bool done = false;
@@ -245,7 +248,7 @@ LRESULT CALLBACK WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam 
             GetWindowRect( hwnd, &rectPos );
 
             WCHAR awcPos[ 100 ];
-            int len = swprintf_s( awcPos, _countof( awcPos ), L"%d %d", rectPos.left, rectPos.top );
+            swprintf_s( awcPos, _countof( awcPos ), L"%d %d", rectPos.left, rectPos.top );
             CDJLRegistry::writeStringToRegistry( HKEY_CURRENT_USER, REGISTRY_APP_NAME, REGISTRY_WINDOW_POSITION, awcPos );
 
             PostQuitMessage( 0 );

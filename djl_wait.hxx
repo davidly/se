@@ -21,7 +21,7 @@ class  CWaitPrecise
                 CloseHandle( waitableTimer );
         }
 
-        bool SetTimer( PTIMERAPCROUTINE proutine, LPVOID arg, LONGLONG ms )
+        bool SetTimer( PTIMERAPCROUTINE proutine, LPVOID arg, LONG ms )
         {
             if ( 0 == waitableTimer )
                 return false;
